@@ -10,7 +10,6 @@ from users.constants import (
 from foodgram import settings
 
 
-
 class OwnUser(AbstractUser):
     first_name = models.CharField(max_length=MAX_LENGTH_150, blank=False)
     last_name = models.CharField(max_length=MAX_LENGTH_150, blank=False)
