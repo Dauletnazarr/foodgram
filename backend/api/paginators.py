@@ -1,11 +1,8 @@
 from rest_framework.pagination import PageNumberPagination
-
-PAGE_SIZE = 10
-
-
-class OwnUserPagination(PageNumberPagination):
-    page_size = PAGE_SIZE
+from foodgram.settings import PAGE_SIZE
 
 
-class NoPagination(PageNumberPagination):
-    page_size = None
+class UserModelPagination(PageNumberPagination):
+    page_size = PAGE_SIZE  # Значение по умолчанию
+    page_size_query_param = 'limit'
+    max_page_size = 100

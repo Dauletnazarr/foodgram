@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from django.core.management.utils import get_random_secret_key
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -11,12 +11,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-j2apl)jk)m#!22f^b-1cv2o+tww)i(!la@+kke4ghks#1+4f$i'
+SECRET_KEY = os.environ.get('SECRET_KEY', get_random_secret_key())
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1').split(',')
 
 
 # Application definition
@@ -33,7 +33,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'djoser',
     'api',
-    'users',
+    'recipes',
 ]
 
 MIDDLEWARE = [
@@ -74,8 +74,12 @@ WSGI_APPLICATION = 'foodgram.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql' if os.getenv('USE_POSTGRES', 'False') == 'True' else 'django.db.backends.sqlite3',
+        'NAME': os.getenv('POSTGRES_DB', BASE_DIR / 'db.sqlite3'),
+        'USER': os.getenv('POSTGRES_USER', ''),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', ''),
+        'HOST': os.getenv('POSTGRES_HOST', 'localhost'),
+        'PORT': os.getenv('POSTGRES_PORT', '5432'),
     }
 }
 
@@ -98,7 +102,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-AUTH_USER_MODEL = 'users.OwnUser'
+AUTH_USER_MODEL = 'recipes.UserModel'
 
 DJOSER = {
     'HIDE_USERS': False,
@@ -106,30 +110,25 @@ DJOSER = {
     'SEND_ACTIVATION_EMAIL': False,
     'TOKEN_MODEL': 'rest_framework.authtoken.models.Token',
     'SERIALIZERS': {
-        # Указываем какой сериализатор использовать для djoser
-        'user_create': 'api.serializers.OwnUserCreateSerializer',
-        # 'user': 'yourapp.serializers.CustomUserSerializer',
+        'user': 'djoser.serializers.UserSerializer',
+        'current_user': 'djoser.serializers.CurrentUserSerializer',
     },
     'PERMISSIONS': {
-        'user_create': (AllowAny,),  # Разрешение на регистрацию пользователей
-        'user': (IsAuthenticated,),  # Разрешение на получение информации о пользователе
-        'me': (IsAuthenticated),
-        'anonymous': (AllowAny,),
-        'user_list': (AllowAny,),
-        'set_password': (IsAuthenticated,),  # Разрешение на изменение пароля
+        'user': ('rest_framework.permissions.AllowAny',),
+        'user_list': ('rest_framework.permissions.AllowAny',),
     },
 }
 
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+        'rest_framework.permissions.AllowAny',
     ],
 
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
     ],
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'DEFAULT_PAGINATION_CLASS': 'api.paginators.UserModelPagination',
     'PAGE_SIZE': 10,
 }
 
@@ -154,16 +153,16 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = '/static/'
-MEDIA_URL = '/media/'
 
-# MEDIA_URL = '/media/'  # URL, по которому будут доступны медиафайлы
-# MEDIA_ROOT = BASE_DIR, 'media/'
+STATIC_URL = '/static/'  # URL, по которому будет доступна статика
+STATIC_ROOT = BASE_DIR / 'static/'
 
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')  # This is now a string
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+MEDIA_URL = '/media/'  # URL, по которому будут доступны медиафайлы
+MEDIA_ROOT = BASE_DIR / 'media/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+PAGE_SIZE = 10

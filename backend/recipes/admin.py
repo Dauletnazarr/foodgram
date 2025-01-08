@@ -1,10 +1,11 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from users.models import IngredientInRecipe, OwnUser, Recipe, Tag, Ingredient
+from recipes.models import (
+    IngredientInRecipe, UserModel, Recipe, Tag, Ingredient)
 
 
-@admin.register(OwnUser)
+@admin.register(UserModel)
 class UserModelAdmin(UserAdmin):
     list_display = ('username', 'id', 'email', 'first_name', 'last_name',
                     'is_staff')
