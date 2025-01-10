@@ -55,8 +55,8 @@ class Subscription(models.Model):
                              on_delete=models.CASCADE)
 
     subscribed_to = models.ForeignKey(settings.AUTH_USER_MODEL,
-                                       related_name='subscribers',
-                                       on_delete=models.CASCADE)
+                                      related_name='subscribers',
+                                      on_delete=models.CASCADE)
 
     class Meta:
         unique_together = ('user', 'subscribed_to')
