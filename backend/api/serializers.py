@@ -13,7 +13,6 @@ User = get_user_model()
 
 
 class UserModelSerializer(serializers.ModelSerializer):
-    avatar = Base64ImageField(required=False)
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
@@ -22,15 +21,18 @@ class UserModelSerializer(serializers.ModelSerializer):
                   'last_name', 'is_subscribed', 'avatar']
 
     def get_is_subscribed(self, obj):
-        """Метод для проверки, подписан ли текущий
-        пользователь на данного пользователя."""
-        request = self.context.get('request')
-        if request is None or not hasattr(request, 'user'):
-            return False  # Если request отсутствует или
-        # не имеет атрибута user, возвращаем False
-
-        return request.user.is_authenticated and Subscription.objects.filter(
-            user=request.user, subscribed_to=obj).exists()
+        """
+        Метод для проверки, подписан ли текущий
+        пользователь на данного пользователя.
+        """
+        return bool(
+            self.context.get('request') and (
+                self.context['request'].user.is_authenticated
+            ) and Subscription.objects.filter(
+                user=self.context['request'].user,
+                subscribed_to=obj
+            ).exists()
+        )
 
 
 class AvatarUpdateSerializer(serializers.ModelSerializer):
@@ -67,8 +69,7 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class IngredientInRecipeReadSerializer(serializers.ModelSerializer):
-    id = serializers.PrimaryKeyRelatedField(source='ingredient',
-                                            read_only=True)
+    id = serializers.PrimaryKeyRelatedField(queryset=Ingredient.objects.all())
     name = serializers.CharField(source='ingredient.name', read_only=True)
     measurement_unit = serializers.CharField(
         source='ingredient.measurement_unit', read_only=True)
@@ -109,7 +110,11 @@ class RecipeReadSerializer(serializers.ModelSerializer):
     author = UserModelSerializer(read_only=True)
 
     # Используем IngredientInRecipeReadSerializer для вложенных ингредиентов
-    ingredients = IngredientInRecipeReadSerializer(many=True, read_only=True)
+    ingredients = IngredientInRecipeReadSerializer(
+        many=True,
+        read_only=True,
+        source='ingredients_in_recipe'
+    )
 
     # Теги возвращаются с использованием имени
     tags = TagSerializer(many=True)
@@ -282,9 +287,6 @@ class RecipeSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         read_serializer = RecipeReadSerializer(instance, context=self.context)
         representation = read_serializer.data
-        ingredients = IngredientInRecipe.objects.filter(recipe=instance)
-        representation['ingredients'] = IngredientInRecipeReadSerializer(
-            ingredients, many=True).data
         return representation
 
 

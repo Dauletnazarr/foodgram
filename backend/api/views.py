@@ -1,7 +1,7 @@
 import os
+
 from djoser.conf import settings
 from djoser.views import UserViewSet
-
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.urls import reverse
@@ -15,7 +15,7 @@ from rest_framework.permissions import (
 )
 from rest_framework.response import Response
 
-from api.paginators import UserModelPagination
+from api.paginators import Pagination
 from api.serializers import (
     AvatarUpdateSerializer, RecipeShortSerializer,
     SubscribedUsersSerializer, TagSerializer,
@@ -33,7 +33,7 @@ class UsersViewSet(UserViewSet):
     serializer_class = UserModelSerializer
     queryset = UserModel.objects.all()
     permission_classes = [AuthorOrReadOnly]
-    pagination_class = UserModelPagination
+    pagination_class = Pagination
 
     def get_permissions(self):
         if self.action == 'me':
@@ -94,36 +94,23 @@ class UsersViewSet(UserViewSet):
         Получение списка подписок текущего пользователя с пагинацией.
         """
         user = request.user
-        subscriptions = Subscription.objects.filter(user=user).select_related(
-            'subscribed_to')
+        subscriptions = Subscription.objects.filter(user=user)
         subscribed_users = UserModel.objects.filter(
-            pk__in=subscriptions.values_list('subscribed_to', flat=True))
-
-        # Получаем параметр limit из запроса
-        limit = request.query_params.get('limit', None)
-
-        # Если параметр limit есть, передаем его в пагинатор
-        paginator = UserModelPagination()
-        if limit is not None:
-            paginator.page_size = int(limit)
-
-        # Пагинируем список пользователей
+            pk__in=subscriptions.values_list('subscribed_to', flat=True)
+        )
+        paginator = Pagination()
         paginated_users = paginator.paginate_queryset(subscribed_users,
                                                       request)
-        # Сериализуем данные
         serializer = SubscribedUsersSerializer(paginated_users, many=True,
                                                context={'request': request})
-        # Возвращаем ответ с пагинацией
         return paginator.get_paginated_response(serializer.data)
 
     @action(detail=True, methods=['POST', 'DELETE'],
             permission_classes=[IsAuthenticated], url_path='subscribe')
     def subscribe(self, request, id=None):
-        # Получаем пользователя, на которого подписываются
         user_to_subscribe = self.get_object()
-        user = request.user  # Получаем текущего авторизованного пользователя
+        user = request.user
         subscribed_to = get_object_or_404(UserModel, pk=id)
-
         if request.method == 'POST':
             # Логика для подписки
             if request.user == subscribed_to:
@@ -131,30 +118,39 @@ class UsersViewSet(UserViewSet):
                     {'error': 'Вы не можете подписаться на самого себя.'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            subscription, created = Subscription.objects.get_or_create(
+
+            _, created = Subscription.objects.get_or_create(
                 user=user,
                 subscribed_to=user_to_subscribe
             )
+
             if created:
-                # Если подписка создана, возвращаем информацию
-                # о пользователе с подпиской
                 serializer = SubscribedUsersSerializer(
                     user_to_subscribe, context={'request': request})
                 return Response(
-                    serializer.data, status=status.HTTP_201_CREATED)
-            else:
-                return Response({"detail": "Already subscribed."},
-                                status=status.HTTP_400_BAD_REQUEST)
+                    serializer.data, status=status.HTTP_201_CREATED
+                )
+
+            return Response(
+                {"detail": "Already subscribed."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         subscription = Subscription.objects.filter(
-            user=user, subscribed_to=user_to_subscribe)
+            user=user, subscribed_to=user_to_subscribe
+        )
+
         if subscription.exists():
             subscription.delete()
-            return Response({"detail": "Successfully unsubscribed."},
-                            status=status.HTTP_204_NO_CONTENT)
-        else:
-            return Response({"detail": "Subscription does not exist."},
-                            status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "Successfully unsubscribed."},
+                status=status.HTTP_204_NO_CONTENT
+            )
+
+        return Response(
+            {"detail": "Subscription does not exist."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -179,7 +175,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
-    pagination_class = UserModelPagination  # Настроенная пагинация
+    pagination_class = Pagination  # Настроенная пагинация
     http_method_names = ('get', 'post', 'patch', 'delete')
     permission_classes = (IsAuthenticatedOrReadOnly, AuthorOrReadOnly)
     filter_backends = [DjangoFilterBackend, SearchFilter]
@@ -209,31 +205,33 @@ class RecipeViewSet(viewsets.ModelViewSet):
         Формирует и возвращает файл со списком покупок.
         """
         user = request.user
-
-        # Получаем ингредиенты, которые находятся в корзине пользователя
-        shopping_cart = ShoppingCart.objects.filter(user=user)
-
-        if not shopping_cart.exists():
+        # Получаем список ингредиентов, находящихся в корзине пользователя
+        ingredients_data = self.get_ingredients_for_shopping_cart(user)
+        if not ingredients_data:
             return Response({'error': 'Корзина пуста.'},
                             status=status.HTTP_400_BAD_REQUEST)
-
-        # Получаем список ингредиентов с подсчитанным количеством,
-        # отфильтрованным по пользователю
-        ingredients_data = self.get_ingredients_for_shopping_cart(user)
 
         # Формируем и возвращаем файл с данными
         return self.generate_shopping_cart_file(ingredients_data)
 
     def get_ingredients_for_shopping_cart(self, user):
         """
-        Получает ингредиенты, которые находятся в корзине пользователя,
-        с подсчитанным количеством.
+        Получает список ингредиентов, которые находятся в корзине пользователя,
+        с подсчетом общего количества для каждого ингредиента.
         """
+        # Получаем все рецепты, добавленные в корзину
+        # пользователя через модель ShoppingCart
+        shopping_cart_items = ShoppingCart.objects.filter(user=user)
+        # Используем модель IngredientInRecipe для фильтрации по рецептам
         ingredients_data = IngredientInRecipe.objects.filter(
-            recipe__in=ShoppingCart.objects.filter(user=user).values('recipe')
-        ).values('ingredient__name', 'ingredient__measurement_unit').annotate(
+            recipe__in=[item.recipe for item in shopping_cart_items]
+        ).values(
+            'ingredient__name',  # Название ингредиента
+            'ingredient__measurement_unit'  # Единица измерения
+        ).annotate(
+            # Агрегируем по количеству и используем 'total_quantity'
             total_amount=Sum('amount')
-        ).order_by('ingredient__name')
+        ).order_by('ingredient__name')  # Упорядочиваем по названию ингредиента
 
         return ingredients_data
 
@@ -314,7 +312,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         user = request.user
         recipe = get_object_or_404(Recipe, pk=pk)
 
-        relation, created = model.objects.get_or_create(
+        _, created = model.objects.get_or_create(
             user=user, recipe=recipe)
         if not created:
             return Response({'error': error_message},

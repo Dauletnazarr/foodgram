@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.models import Group
 
 from recipes.models import (
     IngredientInRecipe, UserModel, Recipe, Tag, Ingredient)
@@ -35,9 +36,8 @@ class IngredientInRecipeInline(admin.TabularInline):
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
-    list_display = ('name', 'id', 'author')
+    list_display = ('name', 'id', 'author', 'get_favorites_count')
     inlines = [IngredientInRecipeInline]
-    # prepopulated_fields = {'author': ('name',)}
     filter_horizontal = ('tags',)
     list_filter = ('name',)
 
@@ -49,4 +49,4 @@ class IngredientInRecipeAdmin(admin.ModelAdmin):
     list_filter = ('recipe',)
 
 
-# admin.site.register(Recipe, RecipeAdmin)
+admin.site.unregister(Group)

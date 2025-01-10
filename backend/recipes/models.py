@@ -10,30 +10,27 @@ from django.urls import reverse
 
 
 from recipes.constants import (
-    MAX_LENGTH_32, MAX_LENGTH_64, MAX_LENGTH_128,
-    MAX_LENGTH_150, MAX_LENGTH_254
+    USER_MAX_LENGTH,
+    EMAIL_MAX_LENGTH,
+    SHORT_LINK_MAX_LENGTH,
+    TAG_MAX_LENGTH,
+    MEASUREMENT_UNIT_MAX_LENGTH,
+    RECIPE_NAME_MAX_LENGTH,
+    INGREDIENT_NAME_MAX_LENGTH,
+    COOKING_TIME_MIN_VALUE,
+    AMOUNT_MIN_VALUE
 )
 from foodgram import settings
 
-# КОНСТАНТЫ ПОТОМ ДОДЕЛАЮ :)
-
-# from recipes.constants import (
-#     USER_USERNAME_MAX_LENGTH,
-#     USER_EMAIL_MAX_LENGTH,
-#     RECIPE_TITLE_MAX_LENGTH,
-#     RECIPE_DESCRIPTION_MAX_LENGTH,
-#     INGREDIENT_NAME_MAX_LENGTH,
-# )
-
 
 class UserModel(AbstractUser):
-    first_name = models.CharField(max_length=MAX_LENGTH_150,)
-    last_name = models.CharField(max_length=MAX_LENGTH_150,)
+    first_name = models.CharField(max_length=USER_MAX_LENGTH,)
+    last_name = models.CharField(max_length=USER_MAX_LENGTH,)
 
-    username = models.CharField(max_length=MAX_LENGTH_150, unique=True,
+    username = models.CharField(max_length=USER_MAX_LENGTH, unique=True,
                                 validators=(UnicodeUsernameValidator(),))
 
-    email = models.EmailField(max_length=MAX_LENGTH_254,
+    email = models.EmailField(max_length=EMAIL_MAX_LENGTH,
                               unique=True)
     avatar = models.ImageField(upload_to='users/avatars/',
                                blank=True,
@@ -58,26 +55,32 @@ class Subscription(models.Model):
                              on_delete=models.CASCADE)
 
     subscribed_to = models.ForeignKey(settings.AUTH_USER_MODEL,
-                                      related_name='subscribers',
-                                      on_delete=models.CASCADE)
+                                       related_name='subscribers',
+                                       on_delete=models.CASCADE)
 
     class Meta:
         unique_together = ('user', 'subscribed_to')
+        constraints = [
+            models.CheckConstraint(
+                check=~models.Q(user=models.F('subscribed_to')),
+                name='prevent_self_subscription'
+            )
+        ]
+
+    def clean(self):
+        """Проверка на самоподписку перед сохранением."""
+        if self.user == self.subscribed_to:
+            raise ValidationError("Нельзя подписаться на самого себя.")
 
     def __str__(self):
         return f'{self.user} подписан на {self.subscribed_to}'
 
-    def save(self, *args, **kwargs):
-        if self.user == self.subscribed_to:
-            raise ValidationError('Вы не можете подписаться на самого себя!')
-        super().save(*args, **kwargs)
-
 
 class Tag(models.Model):
-    name = models.CharField(unique=True, max_length=MAX_LENGTH_32,)
+    name = models.CharField(unique=True, max_length=TAG_MAX_LENGTH,)
 
     slug = models.SlugField(unique=True,
-                            max_length=MAX_LENGTH_32,)
+                            max_length=TAG_MAX_LENGTH,)
 
     class Meta:
         ordering = ('name',)
@@ -89,8 +92,8 @@ class Tag(models.Model):
 
 
 class Ingredient(models.Model):
-    name = models.CharField(max_length=MAX_LENGTH_128)
-    measurement_unit = models.CharField(max_length=MAX_LENGTH_64)
+    name = models.CharField(max_length=INGREDIENT_NAME_MAX_LENGTH)
+    measurement_unit = models.CharField(max_length=MEASUREMENT_UNIT_MAX_LENGTH)
 
     class Meta:
         ordering = ('name',)
@@ -124,7 +127,8 @@ class Recipe(models.Model):
         verbose_name='Автор',
         related_name='recipes'
     )
-    name = models.CharField(max_length=MAX_LENGTH_64, verbose_name='Название')
+    name = models.CharField(max_length=RECIPE_NAME_MAX_LENGTH,
+                            verbose_name='Название')
     image = models.ImageField(
         upload_to='recipes/images/',
         null=False
@@ -138,12 +142,12 @@ class Recipe(models.Model):
     )
     tags = models.ManyToManyField(Tag,)
     cooking_time = models.PositiveIntegerField(
-        validators=[MinValueValidator(1)],
+        validators=[MinValueValidator(COOKING_TIME_MIN_VALUE)],
         verbose_name='Время приготовления (минуты)',
         help_text='Укажите время приготовления в минутах'
     )
     short_link = models.CharField(
-        max_length=128, null=True, blank=True, verbose_name="Короткая ссылка"
+        max_length=SHORT_LINK_MAX_LENGTH, verbose_name="Короткая ссылка"
     )
 
     class Meta:
@@ -155,10 +159,12 @@ class Recipe(models.Model):
         return self.name
 
     def save(self, *args, **kwargs):
-        # Генерация базового URL для рецепта
-        base_url = reverse('recipes-detail', kwargs={'pk': self.pk})
-        # Генерация короткой ссылки
-        self.short_link = self.generate_short_url(base_url)
+        # Проверка, заполнено ли поле short_link
+        if not self.short_link:
+            # Генерация базового URL для рецепта
+            base_url = reverse('recipes-detail', kwargs={'pk': self.pk})
+            # Генерация короткой ссылки
+            self.short_link = self.generate_short_url(base_url)
         # Сохраняем объект
         super().save(*args, **kwargs)
 
@@ -168,11 +174,20 @@ class Recipe(models.Model):
         short_hash = hash_object.hexdigest()[:8]  # Сокращаем хеш до 8 символов
         return short_hash
 
+    def get_favorites_count(self):
+        """Возвращает количество добавлений в избранное для данного рецепта."""
+        # настраиваем связь с Favorite через related_name='favorites'
+        return self.favorites.count()
+
+    get_favorites_count.short_description = 'Количество добавлений в избранное'
+
 
 class IngredientInRecipe(models.Model):
-    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
+    recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE,
+                               related_name='ingredients_in_recipe')
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
-    amount = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    amount = models.PositiveIntegerField(
+        validators=[MinValueValidator(AMOUNT_MIN_VALUE)])
 
     class Meta:
         ordering = ('recipe',)
