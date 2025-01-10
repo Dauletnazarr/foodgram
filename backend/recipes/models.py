@@ -174,6 +174,10 @@ class Recipe(models.Model):
         short_hash = hash_object.hexdigest()[:8]  # Сокращаем хеш до 8 символов
         return short_hash
 
+    def get_absolute_url(self):
+        # Возвращаем полный URL для отображения рецепта
+        return reverse('recipes-detail', kwargs={'pk': self.pk})
+
     def get_favorites_count(self):
         """Возвращает количество добавлений в избранное для данного рецепта."""
         # настраиваем связь с Favorite через related_name='favorites'
