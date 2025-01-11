@@ -222,14 +222,16 @@ class RecipeViewSet(viewsets.ModelViewSet):
         """
         # Один запрос для получения данных об ингредиентах через связку моделей
         ingredients_data = IngredientInRecipe.objects.filter(
-            recipe__in_cart__user=user  # Фильтр по рецептам, находящимся в корзине пользователя
+            # Фильтр по рецептам, находящимся в корзине пользователя
+            recipe__in_cart__user=user
         ).values(
             'ingredient__name',  # Название ингредиента
             'ingredient__measurement_unit'  # Единица измерения
         ).annotate(
-            total_amount=Sum('amount')  # Подсчет общего количества ингредиентов
-        ).order_by('ingredient__name')  # Упорядочиваем по названию ингредиента
-
+            # Подсчет общего количества ингредиентов
+            total_amount=Sum('amount')
+            # Упорядочиваем по названию ингредиента
+        ).order_by('ingredient__name')
         return ingredients_data
 
     def generate_shopping_cart_file(self, ingredients_data):
