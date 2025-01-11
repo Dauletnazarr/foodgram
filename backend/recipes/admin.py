@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import Group
+from django.db.models import Count
 
 from recipes.models import (
     IngredientInRecipe, UserModel, Recipe, Tag, Ingredient)
@@ -36,10 +37,26 @@ class IngredientInRecipeInline(admin.TabularInline):
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
-    list_display = ('name', 'id', 'author', 'get_favorites_count')
+    list_display = ('name', 'id', 'author', 'favorites_count')
     inlines = [IngredientInRecipeInline]
     filter_horizontal = ('tags',)
     list_filter = ('name',)
+
+    def get_queryset(self, request):
+        """
+        Переопределение метода для добавления поля favorites_count
+        в выборку данных.
+        """
+        queryset = super().get_queryset(request)
+        return queryset.annotate(favorites_count=Count('favorites'))
+
+    def favorites_count(self, obj):
+        """
+        Возвращает количество добавлений в избранное.
+        """
+        return obj.favorites_count
+
+    favorites_count.short_description = 'Количество добавлений в избранное'
 
 
 @admin.register(IngredientInRecipe)

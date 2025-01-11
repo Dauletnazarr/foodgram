@@ -178,13 +178,6 @@ class Recipe(models.Model):
         # Возвращаем полный URL для отображения рецепта
         return reverse('recipes-detail', kwargs={'pk': self.pk})
 
-    def get_favorites_count(self):
-        """Возвращает количество добавлений в избранное для данного рецепта."""
-        # настраиваем связь с Favorite через related_name='favorites'
-        return self.favorites.count()
-
-    get_favorites_count.short_description = 'Количество добавлений в избранное'
-
 
 class IngredientInRecipe(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE,

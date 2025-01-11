@@ -94,15 +94,6 @@ class IngredientInRecipeSerializer(serializers.ModelSerializer):
         model = IngredientInRecipe
         fields = ['id', 'amount']
 
-    def to_representation(self, instance):
-        """
-        Переопределение метода to_representation
-        для использования IngredientInRecipeReadSerializer.
-        """
-        read_serializer = IngredientInRecipeReadSerializer(
-            instance, context=self.context)
-        return read_serializer.data
-
 
 class RecipeReadSerializer(serializers.ModelSerializer):
     # Поля для работы с изображением и автором рецепта
@@ -301,27 +292,15 @@ class RecipeShortSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'image', 'cooking_time']
 
 
-class SubscribedUsersSerializer(serializers.ModelSerializer):
+class SubscribedUsersSerializer(UserModelSerializer):
     recipes_count = serializers.SerializerMethodField()
     recipes = serializers.SerializerMethodField()
-    is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
         model = UserModel  # Модель, которая будет сериализована (UserModel)
         fields = ['email', 'id', 'username', 'first_name',
                   'last_name', 'is_subscribed',
                   'recipes', 'recipes_count', 'avatar']
-
-    def get_is_subscribed(self, obj):
-        """
-        Проверяет, подписан ли текущий пользователь на объект.
-        """
-        request = self.context.get('request')  # Достаем request из контекста
-        if request and request.user.is_authenticated:
-            # Логика проверки подписки
-            return Subscription.objects.filter(user=request.user,
-                                               subscribed_to=obj).exists()
-        return False
 
     def get_recipes_count(self, obj):
         """

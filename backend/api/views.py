@@ -5,7 +5,8 @@ from djoser.views import UserViewSet
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.urls import reverse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
+from django.views.decorators.http import require_http_methods
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -219,18 +220,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
         Получает список ингредиентов, которые находятся в корзине пользователя,
         с подсчетом общего количества для каждого ингредиента.
         """
-        # Получаем все рецепты, добавленные в корзину
-        # пользователя через модель ShoppingCart
-        shopping_cart_items = ShoppingCart.objects.filter(user=user)
-        # Используем модель IngredientInRecipe для фильтрации по рецептам
+        # Один запрос для получения данных об ингредиентах через связку моделей
         ingredients_data = IngredientInRecipe.objects.filter(
-            recipe__in=[item.recipe for item in shopping_cart_items]
+            recipe__in_cart__user=user  # Фильтр по рецептам, находящимся в корзине пользователя
         ).values(
             'ingredient__name',  # Название ингредиента
             'ingredient__measurement_unit'  # Единица измерения
         ).annotate(
-            # Агрегируем по количеству и используем 'total_quantity'
-            total_amount=Sum('amount')
+            total_amount=Sum('amount')  # Подсчет общего количества ингредиентов
         ).order_by('ingredient__name')  # Упорядочиваем по названию ингредиента
 
         return ingredients_data
@@ -338,3 +335,16 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
         return Response({'error': 'Рецепт не найден.'},
                         status=status.HTTP_400_BAD_REQUEST)
+
+
+@require_http_methods(["GET"])
+def redirect_short_link(request, short_link):
+    """
+    Обрабатывает переход по короткой ссылке и переадресовывает
+    на оригинальный рецепт.
+    """
+    # Ищем рецепт по короткой ссылке
+    recipe = get_object_or_404(Recipe, short_link=short_link)
+
+    # Переадресовываем на оригинальный URL рецепта
+    return redirect(recipe.get_absolute_url())  # Или другой путь к рецепту
