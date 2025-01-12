@@ -91,7 +91,7 @@ jobs:
          key: ${{ secrets.SSH_KEY }}
          passphrase: ${{ secrets.SSH_PASSPHRASE }}
          source: "docker-compose.production.yml"
-         target: "/home/${{ secrets.USER }}/foodgram"
+         target: "foodgram"
      - name: Copy ingredients.json via SCP
        uses: appleboy/scp-action@master
        with:
@@ -100,7 +100,7 @@ jobs:
          key: ${{ secrets.SSH_KEY }}
          passphrase: ${{ secrets.SSH_PASSPHRASE }}
          source: "data/ingredients.json"
-         target: "/home/${{ secrets.USER }}/foodgram"
+         target: "foodgram"
          overwrite: true
      - name: Create .env file on server
        uses: appleboy/ssh-action@master
