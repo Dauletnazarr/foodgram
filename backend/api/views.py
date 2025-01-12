@@ -5,8 +5,7 @@ from djoser.views import UserViewSet
 from django.db.models import Sum
 from django.http import HttpResponse
 from django.urls import reverse
-from django.shortcuts import get_object_or_404, redirect
-from django.views.decorators.http import require_http_methods
+from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -337,16 +336,3 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
         return Response({'error': 'Рецепт не найден.'},
                         status=status.HTTP_400_BAD_REQUEST)
-
-
-@require_http_methods(["GET"])
-def redirect_short_link(request, short_link):
-    """
-    Обрабатывает переход по короткой ссылке и переадресовывает
-    на оригинальный рецепт.
-    """
-    # Ищем рецепт по короткой ссылке
-    recipe = get_object_or_404(Recipe, short_link=short_link)
-
-    # Переадресовываем на оригинальный URL рецепта
-    return redirect(recipe.get_absolute_url())  # Или другой путь к рецепту

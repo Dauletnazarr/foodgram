@@ -8,7 +8,6 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.urls import reverse
 
-
 from recipes.constants import (
     USER_MAX_LENGTH,
     EMAIL_MAX_LENGTH,
@@ -20,6 +19,7 @@ from recipes.constants import (
     COOKING_TIME_MIN_VALUE,
     AMOUNT_MIN_VALUE
 )
+
 from foodgram import settings
 
 

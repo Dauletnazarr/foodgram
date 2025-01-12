@@ -50,13 +50,12 @@ class RecipeAdmin(admin.ModelAdmin):
         queryset = super().get_queryset(request)
         return queryset.annotate(favorites_count=Count('favorites'))
 
+    @admin.display(description='Количество добавлений в избранное')
     def favorites_count(self, obj):
         """
         Возвращает количество добавлений в избранное.
         """
         return obj.favorites_count
-
-    favorites_count.short_description = 'Количество добавлений в избранное'
 
 
 @admin.register(IngredientInRecipe)

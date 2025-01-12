@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 
 from api.views import (
     IngredientViewSet, RecipeViewSet, TagViewSet,
-    UsersViewSet, redirect_short_link
+    UsersViewSet
 )
 
 
@@ -16,7 +16,5 @@ router.register('recipes', RecipeViewSet, basename='recipes')
 
 urlpatterns = [
     path('auth/', include('djoser.urls.authtoken')),
-    path('r/<str:short_link>/', redirect_short_link,
-         name='redirect_short_link'),
     path('', include(router.urls)),
 ]
