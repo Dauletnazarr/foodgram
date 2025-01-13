@@ -27,7 +27,7 @@ services:
   frontend:
     # container_name: foodgram_frontend
     build: ./frontend/
-    command: ["tail", "-f", "/dev/null"]
+    command: cp -r /app/build/. /static/
     volumes:
       - static:/static
       - ./frontend/:/app/result_build/
