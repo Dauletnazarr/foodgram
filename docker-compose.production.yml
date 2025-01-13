@@ -1,39 +1,42 @@
+# Файл docker-compose.yml
 version: '3'
 
 volumes:
-  pg_data_production:
-  static_volume:
-  media_volume:
+  pg_data:
+  static:
+  media:
 
 services:
   db:
     image: postgres:13.10
     env_file: .env
     volumes:
-      - pg_data_production:/var/lib/postgresql/data
+      - pg_data:/var/lib/postgresql/data
   backend:
     image: dauletnazar/foodgram_backend
     env_file: .env
     depends_on:
       - db
     volumes:
-      - static_volume:/static
-      - media_volume:/app/media/
+      - static:/static
+      - media:/app/media
+
   frontend:
-    image: dauletnazar/foodgram_frontend
     env_file: .env
+    image: dauletnazar/foodgram_frontend
     command: cp -r /app/build/. /static/
     volumes:
-      - static_volume:/static
+      - static:/static
+
   gateway:
     image: dauletnazar/foodgram_gateway
     env_file: .env
+    volumes:
+      - static:/static
+      - media:/app/media
     depends_on:
       - db
       - backend
       - frontend
-    volumes:
-      - static_volume:/static/
-      - media_volume:/app/media/
     ports:
-      - 7000:80
+      - 8000:80

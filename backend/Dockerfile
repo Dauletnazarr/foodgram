@@ -10,6 +10,4 @@ RUN pip install -r requirements.txt --no-cache-dir
 
 COPY . .
 
-ENV DJANGO_SETTINGS_MODULE=foodgram_backend.settings
-
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "foodgram_backend.wsgi"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "foodgram.wsgi"]
