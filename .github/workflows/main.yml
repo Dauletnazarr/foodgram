@@ -149,16 +149,16 @@ jobs:
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           source: "docker-compose.production.yml"
           target: "/home/${{ secrets.USER }}/foodgram"
-      - name: Copy ingredients.json via SCP
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USER }}
-          key: ${{ secrets.SSH_KEY }}
-          passphrase: ${{ secrets.SSH_PASSPHRASE }}
-          source: "data/ingredients.json"
-          target: "/home/${{ secrets.USER }}/foodgram"
-          overwrite: true
+      # - name: Copy ingredients.json via SCP
+      #   uses: appleboy/scp-action@master
+      #   with:
+      #     host: ${{ secrets.HOST }}
+      #     username: ${{ secrets.USER }}
+      #     key: ${{ secrets.SSH_KEY }}
+      #     passphrase: ${{ secrets.SSH_PASSPHRASE }}
+      #     source: "data/ingredients.json"
+      #     target: "/home/${{ secrets.USER }}/foodgram"
+      #     overwrite: true
       # - name: Create .env file on server
       #   uses: appleboy/ssh-action@master
       #   with:
@@ -186,7 +186,7 @@ jobs:
           script: |
             cd foodgram
             sudo docker compose -f docker-compose.production.yml pull
-            sudo docker compose -f docker-compose.production.yml down
+            sudo su docker compose -f docker-compose.production.yml down
             sudo docker compose -f docker-compose.production.yml up -d
             sudo docker compose -f docker-compose.production.yml exec backend python manage.py migrate
             sudo docker compose -f docker-compose.production.yml exec backend python manage.py collectstatic --no-input
