@@ -32,7 +32,7 @@ from recipes.models import (
 class UsersViewSet(UserViewSet):
     serializer_class = UserModelSerializer
     queryset = UserModel.objects.all()
-    permission_classes = [AuthorOrReadOnly]
+    permission_classes = [AllowAny]
     pagination_class = Pagination
 
     def get_permissions(self):
