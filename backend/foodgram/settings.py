@@ -103,6 +103,11 @@ DJOSER = {
     },
 }
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://ricky-foodgram.hopto.org',
+    'http://ricky-foodgram.hopto.org',  # если используется http
+]
+
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
