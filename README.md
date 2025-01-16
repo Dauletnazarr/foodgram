@@ -57,20 +57,29 @@
 ## Как запустить проект локально
 
 1. Склонируйте репозиторий:
-   ```
-   git clone https://github.com/Dauletnazarr/foodgram
-   ```
+  ```
+  git clone https://github.com/Dauletnazarr/foodgram
+  ```
 
 
 2. Перейдите в директорию /foodgram, и соберите образы и запустите их
   ```
   docker compose up --build
   ```
+3. Импортируйте все ингредиенты.
+  ```
+  docker exec -it foodgram-backend-1 /bin/sh
+  ```
+4. Создайте супер-пользователя.
+```
+docker exec -it foodgram-backend-1 python manage.py createsuperuser
+```
 
-3. Затем откройте в браузере ссылку 127.0.0.1:8000
+5. Затем откройте в браузере ссылку 127.0.0.1:8000
   ```
-  127.0.0.1:8000
+  127.0.0.1:8000/admin/
   ```
+6. Перейдите во вкладку Теги и создайте несколько тегов.
 
 ## Технологии
 * Python - версия 3.9.13
