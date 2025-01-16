@@ -85,8 +85,8 @@ docker exec -it foodgram-backend-1 python manage.py createsuperuser
 * Python - версия 3.9.13
 * Django — основной фреймворк для разработки.
 * Django REST Framework — для создания API.
-* SQLite3 (рекомендуется) — в качестве базы данных.
-* JWT — для аутентификации пользователей.
+* Postgres (рекомендуется) — в качестве базы данных.
+* Djoser — для аутентификации пользователей.
 ## Авторы
 Проект разработан:
 * [Dauletnazar Mambetnazarov.](https://github.com/Dauletnazarr/)
