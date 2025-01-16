@@ -68,7 +68,7 @@
   ```
 3. Импортируйте все ингредиенты.
   ```
-  docker exec -it foodgram-backend-1 /bin/sh
+  docker exec -it foodgram-backend-1 python manage.py import_ingredients
   ```
 4. Создайте супер-пользователя.
 ```
