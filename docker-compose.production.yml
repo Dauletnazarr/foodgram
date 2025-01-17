@@ -31,7 +31,7 @@ services:
     volumes:
       - static:/static
       - media:/app/media
-      - foodgram/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx.conf:/etc/nginx/nginx.conf
       - ./frontend/build:/usr/share/nginx/html/
       - ./docs/:/usr/share/nginx/html/api/docs/
     depends_on:
