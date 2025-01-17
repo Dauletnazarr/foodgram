@@ -57,27 +57,36 @@
 ## Как запустить проект локально
 
 1. Склонируйте репозиторий:
-   ```
-   git clone https://github.com/Dauletnazarr/foodgram
-   ```
+  ```
+  git clone https://github.com/Dauletnazarr/foodgram
+  ```
 
 
 2. Перейдите в директорию /foodgram, и соберите образы и запустите их
   ```
   docker compose up --build
   ```
+3. Импортируйте все ингредиенты.
+  ```
+  docker exec -it foodgram-backend-1 python manage.py import_ingredients
+  ```
+4. Создайте супер-пользователя.
+```
+docker exec -it foodgram-backend-1 python manage.py createsuperuser
+```
 
-3. Затем откройте в браузере ссылку 127.0.0.1:8000
+5. Затем откройте в браузере ссылку 127.0.0.1:8000/admin
   ```
-  127.0.0.1:8000
+  127.0.0.1:8000/admin/
   ```
+6. Авторизуйтесь. Затем перейдите во вкладку Теги и создайте несколько тегов.
 
 ## Технологии
 * Python - версия 3.9.13
 * Django — основной фреймворк для разработки.
 * Django REST Framework — для создания API.
-* SQLite3 (рекомендуется) — в качестве базы данных.
-* JWT — для аутентификации пользователей.
+* Postgres (рекомендуется) — в качестве базы данных.
+* Djoser — для аутентификации пользователей.
 ## Авторы
 Проект разработан:
 * [Dauletnazar Mambetnazarov.](https://github.com/Dauletnazarr/)
