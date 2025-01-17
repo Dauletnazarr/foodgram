@@ -21,7 +21,7 @@ from api.serializers import (
     SubscribedUsersSerializer, TagSerializer,
     IngredientSerializer, RecipeSerializer, UserModelSerializer
 )
-from api.filters import RecipeFilter
+from api.filters import IngredientFilter, RecipeFilter
 from api.permissions import AuthorOrReadOnly
 from recipes.models import (
     Favorite, Ingredient, IngredientInRecipe, ShoppingCart,
@@ -169,7 +169,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     http_method_names = ('get',)
     permission_classes = (AllowAny,)
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ['name']
+    filterset_class = IngredientFilter
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
