@@ -1,6 +1,5 @@
 from django_filters import rest_framework as filters
 from django_filters import CharFilter
-from django.db.models import Q
 
 from recipes.models import Recipe, Tag
 
@@ -13,9 +12,14 @@ class RecipeFilter(filters.FilterSet):
     )
     is_favorited = filters.BooleanFilter(method="filter_is_favorited")
     is_in_shopping_cart = filters.BooleanFilter(
-        method="filter_is_in_shopping_cart"
+        method="filter_is_in_shopping_cart")
+
+    ingredient_name = CharFilter(
+        field_name="ingredients__name",  # Поле, по которому будет фильтрация
+        lookup_expr="icontains",  # Поиск без учета регистра и по вхождению
+        label="Поиск по названию ингредиента"
     )
-    ingredient_name = CharFilter(method='filter_ingredient_name')
+
     class Meta:
         model = Recipe
         fields = ("tags", "author", "is_favorited",
@@ -26,9 +30,11 @@ class RecipeFilter(filters.FilterSet):
         Фильтрация рецептов по состоянию "избранное" для текущего пользователя.
         """
         user = self.request.user
+        # Если рецепты должны быть в избранном
         if value and user.is_authenticated:
             return queryset.filter(favorites__user=user)
-        return queryset
+        return queryset  # Если пользователь не аутентифицирован,
+        # просто возвращаем все рецепты
 
     def filter_is_in_shopping_cart(self, queryset, name, value):
         """
@@ -36,19 +42,8 @@ class RecipeFilter(filters.FilterSet):
         для текущего пользователя.
         """
         user = self.request.user
-        if value and user.is_authenticated:
+        if value and user.is_authenticated:  # Если рецепты должны быть
+            # в корзине покупок
             return queryset.filter(in_cart__user=user)
-        return queryset
-
-    def filter_ingredient_name(self, queryset, name, value):
-        """
-        Фильтрация рецептов по названию ингредиентов без учета порядка слов.
-        """
-        # Разделяем запрос на отдельные слова
-        words = value.split()
-        # Формируем фильтры для поиска каждого слова
-        q_objects = Q()
-        for word in words:
-            q_objects &= Q(ingredients__name__icontains=word)
-        # Применяем фильтр к queryset
-        return queryset.filter(q_objects)
+        return queryset  # Если пользователь не аутентифицирован,
+        # просто возвращаем все рецепты
