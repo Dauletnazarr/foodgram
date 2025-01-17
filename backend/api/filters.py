@@ -12,8 +12,8 @@ class RecipeFilter(filters.FilterSet):
     )
     is_favorited = filters.BooleanFilter(method="filter_is_favorited")
     is_in_shopping_cart = filters.BooleanFilter(
-        method="filter_is_in_shopping_cart")
-
+        method="filter_is_in_shopping_cart"
+    )
     ingredient_name = CharFilter(
         field_name="ingredients__name",  # Поле, по которому будет фильтрация
         lookup_expr="icontains",  # Поиск без учета регистра и по вхождению
@@ -30,11 +30,9 @@ class RecipeFilter(filters.FilterSet):
         Фильтрация рецептов по состоянию "избранное" для текущего пользователя.
         """
         user = self.request.user
-        # Если рецепты должны быть в избранном
         if value and user.is_authenticated:
             return queryset.filter(favorites__user=user)
-        return queryset  # Если пользователь не аутентифицирован,
-        # просто возвращаем все рецепты
+        return queryset
 
     def filter_is_in_shopping_cart(self, queryset, name, value):
         """
@@ -42,8 +40,6 @@ class RecipeFilter(filters.FilterSet):
         для текущего пользователя.
         """
         user = self.request.user
-        if value and user.is_authenticated:  # Если рецепты должны быть
-            # в корзине покупок
+        if value and user.is_authenticated:
             return queryset.filter(in_cart__user=user)
-        return queryset  # Если пользователь не аутентифицирован,
-        # просто возвращаем все рецепты
+        return queryset
