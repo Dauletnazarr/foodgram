@@ -1,7 +1,7 @@
 from django_filters import rest_framework as filters
 from django_filters import CharFilter
 
-from recipes.models import Recipe, Tag
+from recipes.models import Recipe, Tag, Ingredient
 
 
 class RecipeFilter(filters.FilterSet):
@@ -47,3 +47,11 @@ class RecipeFilter(filters.FilterSet):
             return queryset.filter(in_cart__user=user)
         return queryset  # Если пользователь не аутентифицирован,
         # просто возвращаем все рецепты
+
+
+class IngredientFilter(filters.FilterSet):
+    name = filters.CharFilter(field_name='name', lookup_expr='icontains')
+
+    class Meta:
+        model = Ingredient
+        fields = ['name']
