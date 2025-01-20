@@ -161,12 +161,17 @@ class Recipe(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.short_link:
-            self.short_link = self.generate_short_url()
+            self.short_link = self.generate_unique_short_url()
         super().save(*args, **kwargs)
 
-    def generate_short_url(self, base_url=None):
-        """Генерация короткой ссылки"""
-        return str(uuid.uuid4())[:8]
+    def generate_unique_short_url(self):
+        """
+        Генерация уникальной короткой ссылки.
+        """
+        while True:
+            short_link = str(uuid.uuid4())[:8]  # Генерируем короткую ссылку
+            if not Recipe.objects.filter(short_link=short_link).exists():
+                return short_link
 
     def get_absolute_url(self):
         # Возвращаем полный URL для отображения рецепта

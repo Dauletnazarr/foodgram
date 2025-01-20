@@ -190,7 +190,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         """
         recipe = self.get_object()  # Получаем рецепт по pk
         if not recipe.short_link:
-            recipe.short_link = recipe.generate_short_link()
+            recipe.short_link = recipe.generate_unique_short_url()
             recipe.save()
         # Формируем короткую ссылку
         short_url = (
@@ -199,7 +199,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         )
 
         return Response({"short-link": short_url}, status=status.HTTP_200_OK)
-
 
     @action(detail=False, methods=['get'], url_path='download_shopping_cart',
             permission_classes=[IsAuthenticated])
