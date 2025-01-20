@@ -147,7 +147,8 @@ class Recipe(models.Model):
         help_text='Укажите время приготовления в минутах'
     )
     short_link = models.CharField(
-        max_length=SHORT_LINK_MAX_LENGTH, verbose_name="Короткая ссылка"
+        max_length=SHORT_LINK_MAX_LENGTH, verbose_name="Короткая ссылка",
+        unique=True
     )
 
     class Meta:
