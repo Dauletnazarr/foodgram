@@ -12,7 +12,5 @@ def redirect_short_link(request, short_link):
     """
     # Ищем рецепт по короткой ссылке
     recipe = get_object_or_404(Recipe, short_link=short_link)
-    frontend_url = f"/recipes/{recipe.id}"
-
     # Переадресовываем на оригинальный URL рецепта
-    return redirect(frontend_url)  # Или другой путь к рецепту
+    return redirect(f"/recipes/{recipe.id}")  # Или другой путь к рецепту
