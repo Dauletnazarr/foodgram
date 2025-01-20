@@ -1,4 +1,4 @@
-import hashlib
+import uuid
 
 from django.db import models
 from django.db.models import UniqueConstraint
@@ -160,20 +160,13 @@ class Recipe(models.Model):
         return self.name
 
     def save(self, *args, **kwargs):
-        # Проверка, заполнено ли поле short_link
         if not self.short_link:
-            # Генерация базового URL для рецепта
-            base_url = reverse('recipes-detail', kwargs={'pk': self.pk})
-            # Генерация короткой ссылки
-            self.short_link = self.generate_short_url(base_url)
-        # Сохраняем объект
+            self.short_link = self.generate_short_url()
         super().save(*args, **kwargs)
 
-    def generate_short_url(self, base_url):
-        """Генерация короткой ссылки на основе id рецепта"""
-        hash_object = hashlib.md5(base_url.encode())
-        short_hash = hash_object.hexdigest()[:8]  # Сокращаем хеш до 8 символов
-        return short_hash
+    def generate_short_url(self, base_url=None):
+        """Генерация короткой ссылки"""
+        return str(uuid.uuid4())[:8]
 
     def get_absolute_url(self):
         # Возвращаем полный URL для отображения рецепта
