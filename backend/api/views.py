@@ -181,19 +181,17 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filterset_class = RecipeFilter
     filterset_fields = ['author']  # Фильтрация по автору
 
-    @action(detail=True, methods=['get'],
-            permission_classes=[AllowAny], url_path='get-link')
+    @action(detail=True, methods=['get'], permission_classes=[AllowAny],
+            url_path='get-link')
     def get_link(self, request, pk=None):
         """
-        Возвращает существующую короткую ссылку для рецепта.
+        Возвращает существующую короткую
+        ссылку для рецепта или генерирует новую.
         """
         recipe = self.get_object()  # Получаем рецепт по pk
-
-        # Убедимся, что короткая ссылка существует
         if not recipe.short_link:
-            raise ValueError("Короткая ссылка не была"
-                             "сгенерирована для этого рецепта.")
-
+            recipe.short_link = recipe.generate_short_link()
+            recipe.save()
         # Формируем короткую ссылку
         short_url = (
             f"{self.request.scheme}://{self.request.get_host()}"
@@ -201,6 +199,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         )
 
         return Response({"short-link": short_url}, status=status.HTTP_200_OK)
+
 
     @action(detail=False, methods=['get'], url_path='download_shopping_cart',
             permission_classes=[IsAuthenticated])
