@@ -185,15 +185,20 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get'],
             permission_classes=[AllowAny], url_path='get-link')
     def get_link(self, request, pk=None):
-        """Генерация короткой ссылки для рецепта"""
+        """
+        Возвращает существующую короткую ссылку для рецепта.
+        """
         recipe = self.get_object()  # Получаем рецепт по pk
-        # Строим базовый URL для рецепта
-        base_url = self.request.build_absolute_uri(
-            reverse('recipes-detail', kwargs={'pk': recipe.pk}))
-        # Генерация короткой ссылки через метод модели
-        short_hash = recipe.generate_short_url(base_url)
+
+        # Убедимся, что короткая ссылка существует
+        if not recipe.short_link:
+            raise ValueError("Короткая ссылка не была"
+                             "сгенерирована для этого рецепта.")
+
+        # Формируем короткую ссылку
         short_url = (
-            f"{self.request.scheme}://{self.request.get_host()}/r/{short_hash}"
+            f"{self.request.scheme}://{self.request.get_host()}"
+            f"/r/{recipe.short_link}"
         )
 
         return Response({"short-link": short_url}, status=status.HTTP_200_OK)
